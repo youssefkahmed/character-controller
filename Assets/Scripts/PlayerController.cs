@@ -32,6 +32,7 @@ namespace CharacterControllers
         
         private Vector2 _moveInput;
         private Vector3 _currentVelocity = Vector3.zero;
+        private Vector3 _appliedVelocity = Vector3.zero;
         private bool _isMovePressed;
 
         private float _currentSpeed;
@@ -103,7 +104,9 @@ namespace CharacterControllers
 
         private void MoveCharacter()
         {
-            _characterController.Move(_currentSpeed * Time.deltaTime * _currentVelocity);
+            _appliedVelocity.x = _currentVelocity.x;
+            _appliedVelocity.z = _currentVelocity.z;
+            _characterController.Move(_currentSpeed * Time.deltaTime * _appliedVelocity);
         }
         
         private void HandleRotation()
@@ -123,12 +126,14 @@ namespace CharacterControllers
             bool isFalling = _currentVelocity.y <= 0.0f || !_isJumpPressed;
             
             float previousYVelocity = _currentVelocity.y;
-            float newYVelocity = isFalling
+            _currentVelocity.y = isFalling
                 ? _currentVelocity.y + _jumpGravities[_jumpCount] * fallMultiplier * Time.deltaTime
                 : _currentVelocity.y + _jumpGravities[_jumpCount] * Time.deltaTime;
-            float nextYVelocity = Mathf.Max((previousYVelocity + newYVelocity) * 0.5f, maxFallSpeed);
 
-            _currentVelocity.y = _characterController.isGrounded ? groundedGravity : nextYVelocity;
+            _currentVelocity.y = _characterController.isGrounded ? groundedGravity : _currentVelocity.y;
+            _appliedVelocity.y = _characterController.isGrounded
+                ? groundedGravity
+                : Mathf.Max((previousYVelocity + _currentVelocity.y) * 0.5f, maxFallSpeed);
         }
         
         private void HandleJump()
@@ -142,7 +147,8 @@ namespace CharacterControllers
                 
                 _isJumping = true;
                 _jumpCount = Math.Clamp(_jumpCount + 1, 1, _initialJumpVelocities.Count);
-                _currentVelocity.y = _initialJumpVelocities[_jumpCount] * 0.5f;
+                _currentVelocity.y = _initialJumpVelocities[_jumpCount];
+                _appliedVelocity.y = _initialJumpVelocities[_jumpCount];
             }
             else if (!_isJumpPressed && _isJumping && _characterController.isGrounded)
             {
