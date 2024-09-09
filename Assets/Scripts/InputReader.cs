@@ -25,6 +25,11 @@ namespace CharacterControllers.Input
             _playerInput.Enable();
         }
         
+        public void DisablePlayerActions()
+        {
+            _playerInput?.Disable();
+        }
+        
         public void OnMove(InputAction.CallbackContext context)
         {
             Move?.Invoke(context.ReadValue<Vector2>());
